@@ -46,6 +46,7 @@ linked_*.ds
 unlinked.ds
 unlinked_spec.ds
 .idea/
+*chrome/
 
 # Android related
 **/android/**/gradle-wrapper.jar
