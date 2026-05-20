@@ -44,25 +44,78 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'Categoria: ${product.category}',
-                    style: Theme.of(context).textTheme.bodyLarge,
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      Chip(
+                        label: Text(product.category),
+                        avatar: const Icon(Icons.category, size: 16),
+                      ),
+                      if (product.brand.isNotEmpty)
+                        Chip(
+                          label: Text(product.brand),
+                          avatar: const Icon(Icons.store, size: 16),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Text(
+                        'R\$ ${product.price.toStringAsFixed(2)}',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(
+                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      if (product.discountPercentage > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade100,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '-${product.discountPercentage.toStringAsFixed(0)}%',
+                            style: TextStyle(
+                              color: Colors.red.shade700,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'Preço: R\$ ${product.price.toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Avaliação: ${product.rating.toStringAsFixed(1)}',
-                    style: Theme.of(context).textTheme.bodyLarge,
+                  Row(
+                    children: [
+                      const Icon(Icons.star, size: 18, color: Colors.amber),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${product.rating.toStringAsFixed(1)}  •  Estoque: ${product.stock}',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
+                  Text(
+                    'Descrição',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
                   Text(
                     product.description,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

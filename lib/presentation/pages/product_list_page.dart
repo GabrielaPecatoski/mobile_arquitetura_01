@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../domain/models/product.dart';
+import '../../session/session_manager.dart';
 import '../viewmodels/product_list_viewmodel.dart';
 import '../widgets/product_skeleton.dart';
 import 'product_detail_page.dart';
@@ -32,11 +33,52 @@ class _ProductListPageState extends State<ProductListPage> {
     );
   }
 
+  Future<void> _logout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sair'),
+        content: const Text('Deseja realmente sair da conta?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sair'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await SessionManager.clearUser();
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = SessionManager.currentUser;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Catálogo'),
+        title: user != null
+            ? Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundImage: NetworkImage(user.image),
+                    backgroundColor: Colors.grey.shade300,
+                    onBackgroundImageError: (_, __) {},
+                  ),
+                  const SizedBox(width: 8),
+                  Text('Olá, ${user.firstName}!'),
+                ],
+              )
+            : const Text('Catálogo'),
         actions: [
           Consumer<ProductListViewModel>(
             builder: (_, vm, __) {
@@ -53,8 +95,20 @@ class _ProductListPageState extends State<ProductListPage> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.refresh),
+                tooltip: 'Atualizar',
               );
             },
+          ),
+          if (user != null)
+            IconButton(
+              onPressed: () => Navigator.pushNamed(context, '/profile'),
+              icon: const Icon(Icons.person_outline),
+              tooltip: 'Meu perfil',
+            ),
+          IconButton(
+            onPressed: _logout,
+            icon: const Icon(Icons.logout),
+            tooltip: 'Sair',
           ),
         ],
       ),
@@ -148,6 +202,17 @@ class _ProductList extends StatelessWidget {
             '${product.category} • R\$ ${product.price.toStringAsFixed(2)}',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.star, size: 14, color: Colors.amber),
+              const SizedBox(width: 2),
+              Text(
+                product.rating.toStringAsFixed(1),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
           ),
           onTap: () => onTap(product),
         );

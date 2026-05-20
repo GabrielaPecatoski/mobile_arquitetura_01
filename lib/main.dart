@@ -8,6 +8,9 @@ import 'data/datasources/product_api.dart';
 import 'data/repositories/product_repository_impl.dart';
 import 'presentation/pages/product_list_page.dart';
 import 'presentation/viewmodels/product_list_viewmodel.dart';
+import 'screens/login_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +40,13 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
         ),
-        home: const ProductListPage(),
+        initialRoute: '/',
+        routes: {
+          '/': (context) => const SplashScreen(),
+          '/login': (context) => const LoginScreen(),
+          '/products': (context) => const ProductListPage(),
+          '/profile': (context) => const ProfileScreen(),
+        },
       ),
     );
   }
