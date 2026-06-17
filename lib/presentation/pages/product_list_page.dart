@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../domain/models/product.dart';
 import '../../session/session_manager.dart';
+import '../viewmodels/favorites_viewmodel.dart';
 import '../viewmodels/product_list_viewmodel.dart';
 import '../widgets/product_skeleton.dart';
 import 'product_detail_page.dart';
@@ -96,6 +97,19 @@ class _ProductListPageState extends State<ProductListPage> {
                       )
                     : const Icon(Icons.refresh),
                 tooltip: 'Atualizar',
+              );
+            },
+          ),
+          Consumer<FavoritesViewModel>(
+            builder: (_, favorites, __) {
+              return IconButton(
+                onPressed: () => Navigator.pushNamed(context, '/favorites'),
+                icon: Badge(
+                  isLabelVisible: favorites.count > 0,
+                  label: Text('${favorites.count}'),
+                  child: const Icon(Icons.favorite),
+                ),
+                tooltip: 'Favoritos',
               );
             },
           ),
@@ -212,11 +226,38 @@ class _ProductList extends StatelessWidget {
                 product.rating.toStringAsFixed(1),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+              FavoriteButton(product: product),
             ],
           ),
           onTap: () => onTap(product),
         );
       },
+    );
+  }
+}
+
+/// Botão de coração que marca/remove um produto dos favoritos.
+///
+/// Observa o [FavoritesViewModel] via [context.watch], então se reconstrói
+/// automaticamente quando o estado de favorito do produto muda — sem
+/// reconstruir a lista inteira.
+class FavoriteButton extends StatelessWidget {
+  final Product product;
+
+  const FavoriteButton({super.key, required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    final favorites = context.watch<FavoritesViewModel>();
+    final isFavorite = favorites.isFavorite(product.id);
+
+    return IconButton(
+      onPressed: () => context.read<FavoritesViewModel>().toggle(product),
+      icon: Icon(
+        isFavorite ? Icons.favorite : Icons.favorite_border,
+        color: isFavorite ? Colors.red : null,
+      ),
+      tooltip: isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos',
     );
   }
 }

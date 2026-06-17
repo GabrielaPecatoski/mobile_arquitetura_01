@@ -1,18 +1,8 @@
-# Flutter Problemático - Catálogo com Latência e Sem Cache
+# mobile_arquitetura_01 — Catálogo de Produtos (Flutter)
 
-Projeto didático propositalmente ruim para identificação e correção de problemas de:
-
-- latência percebida
-- baixa responsividade
-- ausência de cache de dados
-- ausência de cache explícito de imagens
-- acoplamento entre UI e infraestrutura
-- recarregamento desnecessário
-
-## API usada
-
-Este projeto consome a API pública DummyJSON:
-- `GET https://dummyjson.com/products`
+Aplicativo Flutter de catálogo de produtos com autenticação, sessão
+persistente, listagem e detalhes de produtos, controle de favoritos e cache
+em camadas. Consome a API pública [DummyJSON](https://dummyjson.com).
 
 ## Como executar
 
@@ -20,50 +10,101 @@ Este projeto consome a API pública DummyJSON:
 flutter pub get
 flutter run
 ```
----
 
-# Atividade Prática: Análise e Evolução de Aplicação Flutter
+Login de teste (DummyJSON):
 
-Esta atividade propõe a análise de um projeto Flutter construído propositalmente com limitações arquiteturais e problemas de comportamento relacionados a **latência**, **responsividade** e **ausência de estratégias adequadas de cache**.
+- **Usuário:** `emilys`
+- **Senha:** `emilyspass`
 
-A proposta consiste em examinar o sistema, identificar os problemas existentes e desenvolver uma versão estruturalmente mais adequada, justificando tecnicamente as decisões adotadas ao longo da evolução da aplicação.
+## API utilizada
 
-## Acesso ao Projeto
+Todas as requisições usam a API pública **DummyJSON**:
 
-O projeto-base da atividade está disponível neste repositório.
+| Recurso | Endpoint |
+|---|---|
+| Login | `POST https://dummyjson.com/auth/login` |
+| Perfil do usuário | `GET https://dummyjson.com/auth/me` |
+| Lista de produtos | `GET https://dummyjson.com/products` |
 
-A partir dele, deve-se observar o comportamento da aplicação, analisar suas limitações e realizar as modificações consideradas necessárias.
+> Os detalhes do produto não exigem nova requisição: o objeto `Product`
+> selecionado na lista é enviado diretamente para a tela de detalhes via
+> construtor, evitando latência desnecessária.
 
-## Objetivo da Atividade
+## Arquitetura
 
-O foco da atividade está em compreender que a qualidade de uma aplicação não depende apenas de seu funcionamento correto, mas também de sua organização interna e de sua forma de responder às interações do usuário.
+O projeto segue uma separação em camadas inspirada no padrão **MVVM**:
 
-Assim, a proposta não se limita a fazer o sistema “funcionar”, mas a examinar **como ele se comporta**, quais decisões prejudicam sua qualidade e quais mudanças podem torná-lo mais adequado do ponto de vista arquitetural e da experiência de uso.
+```
+lib/
+├── domain/
+│   └── models/            # Modelo de domínio (Product)
+├── data/
+│   ├── datasources/       # Acesso HTTP à API (ProductApi)
+│   ├── cache/             # Cache em memória e local (SharedPreferences)
+│   └── repositories/      # Orquestração API + cache (Repository)
+├── presentation/
+│   ├── viewmodels/        # Estado da UI (ChangeNotifier)
+│   ├── pages/             # Telas de produtos, detalhes e favoritos
+│   └── widgets/           # Componentes reutilizáveis (skeleton, botões)
+├── models/                # Modelo de usuário (User)
+├── services/              # Serviço de autenticação (AuthService)
+├── session/               # Sessão do usuário (SessionManager)
+├── utils/                 # Helper HTTP
+├── screens/               # Splash, Login e Perfil
+└── main.dart              # Injeção de dependências e rotas
+```
 
-## Proposta de Trabalho
+Cada responsabilidade fica isolada: **modelo** (`Product`, `User`),
+**serviço** (`AuthService`), **sessão** (`SessionManager`) e **tela**
+(`pages`/`screens`) são independentes entre si.
 
-Ao realizar esta atividade, espera-se que sejam desenvolvidas as seguintes ações:
+## Gerenciamento de estado — por que Provider
 
-1. Executar o projeto original e observar seu comportamento em uso.
-2. Identificar os problemas arquiteturais e funcionais presentes na aplicação.
-3. Registrar quais limitações afetam latência, responsividade, organização do código e experiência do usuário.
-4. Evoluir o projeto para uma versão mais adequada.
-5. Descrever com clareza as mudanças realizadas.
-6. Justificar tecnicamente por que essas mudanças melhoram o sistema.
-7. Apresentar o resultado final de forma organizada.
+Foi adotado o **Provider** (`ChangeNotifier` + `Consumer`) por ser a solução
+oficial recomendada pela equipe do Flutter e por equilibrar simplicidade e
+reatividade:
 
-## Resultado Esperado
+- **Atualização automática da interface:** ao marcar/remover um favorito, o
+  `FavoritesViewModel` chama `notifyListeners()` e todos os widgets que o
+  observam (lista, tela de detalhes, contador no app bar e tela de favoritos)
+  se reconstroem sozinhos — sem `setState` manual espalhado pela árvore.
+- **Reconstrução granular:** o `Consumer`/`context.watch` reconstrói apenas o
+  widget que depende do estado (ex.: o botão de coração), não a tela inteira.
+- **Injeção de dependências:** o `MultiProvider` no `main.dart` fornece os
+  ViewModels já configurados com seus repositórios e o `SharedPreferences`.
 
-Como resultado, espera-se uma versão modificada da aplicação acompanhada de uma análise objetiva dos problemas encontrados, de uma descrição das mudanças implementadas e de uma justificativa técnica que relacione cada alteração aos problemas identificados no projeto original.
+Onde o estado é puramente local de um único widget (ex.: índice da galeria de
+imagens na tela de detalhes), foi mantido `setState`, por ser mais simples e
+não justificar um ViewModel.
 
-## Critério Central de Análise
+## Funcionalidades
 
-A análise da atividade deve considerar principalmente a capacidade de:
+### Autenticação e sessão
+- Tela de login com **validação** de usuário e senha.
+- `POST /auth/login` com **tratamento de erro** (credenciais inválidas / falha
+  de rede) exibido na própria tela.
+- Sessão persistida em `SharedPreferences`: ao reabrir o app, a `SplashScreen`
+  verifica a sessão e **bloqueia o acesso** às telas internas sem login,
+  redirecionando para o login quando não há usuário autenticado.
+- Nome do usuário autenticado exibido no app bar e **botão de logout** (com
+  confirmação) que limpa a sessão.
 
-* compreender os problemas existentes no projeto original;
-* reconhecer impactos arquiteturais e de experiência do usuário;
-* propor e implementar melhorias coerentes;
-* explicar tecnicamente as mudanças realizadas.
+### Produtos
+- Lista de produtos (`GET /products`) com **título, preço e imagem**.
+- Tela de detalhes com **nome, preço, descrição, imagens e demais dados**.
+- Tratamento de **carregamento** (skeleton animado) e de **erro** com botão de
+  "Tentar novamente".
+- Cache em camadas (memória → local → rede) para reduzir latência percebida.
 
-> Esta atividade não se limita à implementação de código. Seu propósito é desenvolver análise, diagnóstico, evolução arquitetural e argumentação técnica sobre decisões de projeto em aplicações interativas.
+### Favoritos
+- Marcar/remover produto como favorito pelo coração na lista ou nos detalhes.
+- Tela dedicada de favoritos com contador no app bar.
+- Favoritos persistidos em `SharedPreferences` (sobrevivem ao fechamento do
+  app) e interface atualizada automaticamente via Provider.
 
+## Navegação
+
+- **Rotas nomeadas** (`/`, `/login`, `/products`, `/favorites`, `/profile`)
+  registradas no `MaterialApp`.
+- `Navigator.push` (`MaterialPageRoute`) para abrir os detalhes do produto.
+- `Navigator.pop` para retornar/fechar diálogos (ex.: confirmação de logout).

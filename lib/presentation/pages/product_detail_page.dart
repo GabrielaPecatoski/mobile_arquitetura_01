@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../domain/models/product.dart';
+import '../viewmodels/favorites_viewmodel.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final Product product;
@@ -24,6 +26,23 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           product.title,
           overflow: TextOverflow.ellipsis,
         ),
+        actions: [
+          Consumer<FavoritesViewModel>(
+            builder: (context, favorites, _) {
+              final isFavorite = favorites.isFavorite(product.id);
+              return IconButton(
+                onPressed: () => favorites.toggle(product),
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorite ? Colors.red : null,
+                ),
+                tooltip: isFavorite
+                    ? 'Remover dos favoritos'
+                    : 'Adicionar aos favoritos',
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(

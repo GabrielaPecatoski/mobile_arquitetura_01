@@ -6,7 +6,9 @@ import 'data/cache/product_local_cache.dart';
 import 'data/cache/product_memory_cache.dart';
 import 'data/datasources/product_api.dart';
 import 'data/repositories/product_repository_impl.dart';
+import 'presentation/pages/favorites_page.dart';
 import 'presentation/pages/product_list_page.dart';
+import 'presentation/viewmodels/favorites_viewmodel.dart';
 import 'presentation/viewmodels/product_list_viewmodel.dart';
 import 'screens/login_screen.dart';
 import 'screens/profile_screen.dart';
@@ -25,14 +27,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ProductListViewModel(
-        ProductRepositoryImpl(
-          api: ProductApi(),
-          memoryCache: ProductMemoryCache(),
-          localCache: ProductLocalCache(prefs),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => ProductListViewModel(
+            ProductRepositoryImpl(
+              api: ProductApi(),
+              memoryCache: ProductMemoryCache(),
+              localCache: ProductLocalCache(prefs),
+            ),
+          ),
         ),
-      ),
+        ChangeNotifierProvider(
+          create: (_) => FavoritesViewModel(prefs),
+        ),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Catálogo',
@@ -45,6 +54,7 @@ class MyApp extends StatelessWidget {
           '/': (context) => const SplashScreen(),
           '/login': (context) => const LoginScreen(),
           '/products': (context) => const ProductListPage(),
+          '/favorites': (context) => const FavoritesPage(),
           '/profile': (context) => const ProfileScreen(),
         },
       ),
