@@ -6,10 +6,6 @@ import '../../domain/models/product.dart';
 import '../viewmodels/favorites_viewmodel.dart';
 import 'product_detail_page.dart';
 
-/// Lista os produtos marcados como favoritos.
-///
-/// Observa o [FavoritesViewModel]: ao remover um item aqui (ou em qualquer
-/// outra tela), a interface é atualizada automaticamente.
 class FavoritesPage extends StatelessWidget {
   const FavoritesPage({super.key});
 

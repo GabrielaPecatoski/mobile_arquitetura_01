@@ -71,4 +71,34 @@ class ProductListViewModel extends ChangeNotifier {
 
     notifyListeners();
   }
+
+  Future<void> createProduct(Product draft) async {
+    final created = await _repository.createProduct(draft);
+    final products = [created, ..._state.products];
+    _state = _state.copyWith(
+      status: ProductListStateStatus.success,
+      products: products,
+    );
+    notifyListeners();
+  }
+
+  Future<void> updateProduct(Product product) async {
+    final updated = await _repository.updateProduct(product);
+    final products =
+        _state.products.map((p) => p.id == updated.id ? updated : p).toList();
+    _state = _state.copyWith(products: products);
+    notifyListeners();
+  }
+
+  Future<void> deleteProduct(int id) async {
+    await _repository.deleteProduct(id);
+    final products = _state.products.where((p) => p.id != id).toList();
+    _state = _state.copyWith(
+      status: products.isEmpty
+          ? ProductListStateStatus.empty
+          : ProductListStateStatus.success,
+      products: products,
+    );
+    notifyListeners();
+  }
 }

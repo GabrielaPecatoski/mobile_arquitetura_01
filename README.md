@@ -11,10 +11,11 @@ flutter pub get
 flutter run
 ```
 
-Login de teste (DummyJSON):
+Há duas formas de entrar:
 
-- **Usuário:** `emilys`
-- **Senha:** `emilyspass`
+- **Conta de demonstração (DummyJSON):** usuário `emilys` / senha `emilyspass`.
+- **Criar conta:** botão "Criar conta" na tela de login. O cadastro é salvo
+  localmente e funciona **mesmo offline** (não depende do servidor).
 
 ## API utilizada
 
@@ -25,6 +26,9 @@ Todas as requisições usam a API pública **DummyJSON**:
 | Login | `POST https://dummyjson.com/auth/login` |
 | Perfil do usuário | `GET https://dummyjson.com/auth/me` |
 | Lista de produtos | `GET https://dummyjson.com/products` |
+| Cadastrar produto | `POST https://dummyjson.com/products/add` |
+| Editar produto | `PUT https://dummyjson.com/products/{id}` |
+| Excluir produto | `DELETE https://dummyjson.com/products/{id}` |
 
 > Os detalhes do produto não exigem nova requisição: o objeto `Product`
 > selecionado na lista é enviado diretamente para a tela de detalhes via
@@ -47,10 +51,10 @@ lib/
 │   ├── pages/             # Telas de produtos, detalhes e favoritos
 │   └── widgets/           # Componentes reutilizáveis (skeleton, botões)
 ├── models/                # Modelo de usuário (User)
-├── services/              # Serviço de autenticação (AuthService)
+├── services/              # Autenticação e cadastro (AuthService, AccountStore)
 ├── session/               # Sessão do usuário (SessionManager)
 ├── utils/                 # Helper HTTP
-├── screens/               # Splash, Login e Perfil
+├── screens/               # Splash, Login, Cadastro e Perfil
 └── main.dart              # Injeção de dependências e rotas
 ```
 
@@ -80,12 +84,18 @@ não justificar um ViewModel.
 ## Funcionalidades
 
 ### Autenticação e sessão
-- Tela de login com **validação** de usuário e senha.
-- `POST /auth/login` com **tratamento de erro** (credenciais inválidas / falha
-  de rede) exibido na própria tela.
-- Sessão persistida em `SharedPreferences`: ao reabrir o app, a `SplashScreen`
-  verifica a sessão e **bloqueia o acesso** às telas internas sem login,
-  redirecionando para o login quando não há usuário autenticado.
+- **Cadastro (criar conta):** tela de registro com validação; a conta é
+  persistida localmente (`AccountStore`) e o usuário entra já logado.
+- **Login** com **validação** de usuário e senha:
+  - contas criadas no app são autenticadas localmente (funcionam offline);
+  - demais usuários via `POST /auth/login` (DummyJSON).
+- **Tratamento de erro** (credenciais inválidas / sem conexão) exibido na tela.
+- **Sessão resiliente e persistente:** a sessão é salva em `SharedPreferences`.
+  Ao reabrir o app, a `SplashScreen` mantém o usuário logado sem depender do
+  servidor. Mesmo que a chamada de perfil (`/auth/me`) caia, o app continua
+  logado e usa os dados salvos da sessão (`ProfileScreen`).
+- **Bloqueio de acesso sem login:** sem sessão válida, o usuário é redirecionado
+  para a tela de login.
 - Nome do usuário autenticado exibido no app bar e **botão de logout** (com
   confirmação) que limpa a sessão.
 
@@ -96,6 +106,15 @@ não justificar um ViewModel.
   "Tentar novamente".
 - Cache em camadas (memória → local → rede) para reduzir latência percebida.
 
+### CRUD de produtos
+- **Cadastrar** (`POST /products/add`), **editar** (`PUT /products/{id}`) e
+  **excluir** (`DELETE /products/{id}`) produtos, com validação de formulário,
+  tratamento de erro e confirmação antes de excluir.
+- **Fluxo híbrido:** como o DummyJSON simula a escrita (não persiste de fato),
+  o repositório envia a requisição à API e reflete a alteração na persistência
+  local (memória + `SharedPreferences`), garantindo que a lista permaneça
+  consistente. A interface é atualizada automaticamente via Provider.
+
 ### Favoritos
 - Marcar/remover produto como favorito pelo coração na lista ou nos detalhes.
 - Tela dedicada de favoritos com contador no app bar.
@@ -104,7 +123,7 @@ não justificar um ViewModel.
 
 ## Navegação
 
-- **Rotas nomeadas** (`/`, `/login`, `/products`, `/favorites`, `/profile`)
-  registradas no `MaterialApp`.
+- **Rotas nomeadas** (`/`, `/login`, `/register`, `/products`, `/favorites`,
+  `/profile`) registradas no `MaterialApp`.
 - `Navigator.push` (`MaterialPageRoute`) para abrir os detalhes do produto.
 - `Navigator.pop` para retornar/fechar diálogos (ex.: confirmação de logout).

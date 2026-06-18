@@ -23,4 +23,45 @@ class ProductApi {
         .map((item) => Product.fromMap(item as Map<String, dynamic>))
         .toList();
   }
+
+  Future<int> createProduct(Product product) async {
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/products/add'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(product.toMap()),
+        )
+        .timeout(_timeout);
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Erro ao cadastrar produto: ${response.statusCode}');
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    return (data['id'] as num?)?.toInt() ?? product.id;
+  }
+
+  Future<void> updateProduct(Product product) async {
+    final response = await http
+        .put(
+          Uri.parse('$_baseUrl/products/${product.id}'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(product.toMap()),
+        )
+        .timeout(_timeout);
+
+    if (response.statusCode != 200) {
+      throw Exception('Erro ao atualizar produto: ${response.statusCode}');
+    }
+  }
+
+  Future<void> deleteProduct(int id) async {
+    final response = await http
+        .delete(Uri.parse('$_baseUrl/products/$id'))
+        .timeout(_timeout);
+
+    if (response.statusCode != 200) {
+      throw Exception('Erro ao remover produto: ${response.statusCode}');
+    }
+  }
 }

@@ -27,15 +27,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _errorMessage = null;
     });
 
+    final sessionUser = SessionManager.currentUser;
+
     try {
-      final token = SessionManager.currentUser?.token;
-      if (token == null || token.isEmpty) {
+      final token = sessionUser?.token;
+      if (token != null && token.isNotEmpty) {
+        final user = await AuthService.getMe(token);
+        setState(() => _user = user);
+      } else if (sessionUser != null) {
+        setState(() => _user = sessionUser);
+      } else {
         throw Exception('Sessão não encontrada');
       }
-      final user = await AuthService.getMe(token);
-      setState(() => _user = user);
     } catch (e) {
-      setState(() => _errorMessage = 'Falha ao carregar perfil: $e');
+      if (sessionUser != null) {
+        setState(() => _user = sessionUser);
+      } else {
+        setState(() => _errorMessage = 'Falha ao carregar perfil: $e');
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -77,9 +86,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 CircleAvatar(
                   radius: 56,
-                  backgroundImage: NetworkImage(user.image),
                   backgroundColor: Colors.grey.shade300,
-                  onBackgroundImageError: (_, __) {},
+                  backgroundImage:
+                      user.image.isNotEmpty ? NetworkImage(user.image) : null,
+                  onBackgroundImageError:
+                      user.image.isNotEmpty ? (_, __) {} : null,
+                  child: user.image.isEmpty
+                      ? const Icon(Icons.person, size: 56, color: Colors.white)
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 Text(

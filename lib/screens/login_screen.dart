@@ -161,14 +161,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           )
                         : const Text('Entrar'),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Dica: use  emilys / emilyspass',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: Colors.grey),
-                    textAlign: TextAlign.center,
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () => Navigator.pushNamed(context, '/register'),
+                    child: const Text('Criar conta'),
                   ),
                 ],
               ),

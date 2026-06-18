@@ -8,6 +8,7 @@ import '../viewmodels/favorites_viewmodel.dart';
 import '../viewmodels/product_list_viewmodel.dart';
 import '../widgets/product_skeleton.dart';
 import 'product_detail_page.dart';
+import 'product_form_page.dart';
 
 class ProductListPage extends StatefulWidget {
   const ProductListPage({super.key});
@@ -31,6 +32,13 @@ class _ProductListPageState extends State<ProductListPage> {
       MaterialPageRoute(
         builder: (_) => ProductDetailPage(product: product),
       ),
+    );
+  }
+
+  void _openForm() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProductFormPage()),
     );
   }
 
@@ -65,15 +73,26 @@ class _ProductListPageState extends State<ProductListPage> {
     final user = SessionManager.currentUser;
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openForm,
+        tooltip: 'Novo produto',
+        child: const Icon(Icons.add),
+      ),
       appBar: AppBar(
         title: user != null
             ? Row(
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    backgroundImage: NetworkImage(user.image),
                     backgroundColor: Colors.grey.shade300,
-                    onBackgroundImageError: (_, __) {},
+                    backgroundImage: user.image.isNotEmpty
+                        ? NetworkImage(user.image)
+                        : null,
+                    onBackgroundImageError:
+                        user.image.isNotEmpty ? (_, __) {} : null,
+                    child: user.image.isEmpty
+                        ? const Icon(Icons.person, size: 18)
+                        : null,
                   ),
                   const SizedBox(width: 8),
                   Text('Olá, ${user.firstName}!'),
@@ -236,11 +255,6 @@ class _ProductList extends StatelessWidget {
   }
 }
 
-/// Botão de coração que marca/remove um produto dos favoritos.
-///
-/// Observa o [FavoritesViewModel] via [context.watch], então se reconstrói
-/// automaticamente quando o estado de favorito do produto muda — sem
-/// reconstruir a lista inteira.
 class FavoriteButton extends StatelessWidget {
   final Product product;
 

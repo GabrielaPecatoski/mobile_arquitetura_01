@@ -5,18 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/models/product.dart';
 
-/// Gerencia a lista de produtos favoritos do usuário.
-///
-/// Usa [ChangeNotifier] (via Provider) para que qualquer tela que observe
-/// este model seja reconstruída automaticamente ao marcar/remover um favorito.
-/// Os favoritos são persistidos em [SharedPreferences], sobrevivendo ao
-/// fechamento do app.
 class FavoritesViewModel extends ChangeNotifier {
   static const _storageKey = 'favorite_products';
 
   final SharedPreferences _prefs;
 
-  /// Mapa id -> produto, garantindo unicidade e busca O(1) por id.
   final Map<int, Product> _favorites = {};
 
   FavoritesViewModel(this._prefs) {
@@ -29,7 +22,6 @@ class FavoritesViewModel extends ChangeNotifier {
 
   bool isFavorite(int id) => _favorites.containsKey(id);
 
-  /// Marca como favorito se ainda não estiver; caso contrário, remove.
   void toggle(Product product) {
     if (_favorites.containsKey(product.id)) {
       _favorites.remove(product.id);
@@ -40,7 +32,6 @@ class FavoritesViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Remove explicitamente um produto dos favoritos.
   void remove(int id) {
     if (_favorites.remove(id) != null) {
       _persist();

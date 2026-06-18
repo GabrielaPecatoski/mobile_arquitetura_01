@@ -12,6 +12,7 @@ import 'presentation/viewmodels/favorites_viewmodel.dart';
 import 'presentation/viewmodels/product_list_viewmodel.dart';
 import 'screens/login_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/register_screen.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {
@@ -53,6 +54,7 @@ class MyApp extends StatelessWidget {
         routes: {
           '/': (context) => const SplashScreen(),
           '/login': (context) => const LoginScreen(),
+          '/register': (context) => const RegisterScreen(),
           '/products': (context) => const ProductListPage(),
           '/favorites': (context) => const FavoritesPage(),
           '/profile': (context) => const ProfileScreen(),

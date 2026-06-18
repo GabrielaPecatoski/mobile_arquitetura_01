@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../domain/models/product.dart';
 import '../viewmodels/favorites_viewmodel.dart';
+import '../viewmodels/product_list_viewmodel.dart';
+import 'product_form_page.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final Product product;
@@ -16,10 +18,62 @@ class ProductDetailPage extends StatefulWidget {
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
   int _currentPage = 0;
+  late Product _product = widget.product;
+
+  Future<void> _edit() async {
+    final updated = await Navigator.push<Product>(
+      context,
+      MaterialPageRoute(builder: (_) => ProductFormPage(product: _product)),
+    );
+    if (updated != null && mounted) {
+      setState(() => _product = updated);
+    }
+  }
+
+  Future<void> _delete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Excluir produto'),
+        content: const Text('Deseja realmente excluir este produto?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final vm = context.read<ProductListViewModel>();
+    try {
+      await vm.deleteProduct(_product.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Produto removido')),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Erro ao remover: ${e.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final product = widget.product;
+    final product = _product;
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -41,6 +95,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     : 'Adicionar aos favoritos',
               );
             },
+          ),
+          IconButton(
+            onPressed: _edit,
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Editar produto',
+          ),
+          IconButton(
+            onPressed: _delete,
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Excluir produto',
           ),
         ],
       ),
